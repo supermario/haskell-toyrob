@@ -45,7 +45,7 @@ cmd c = do
     Right         -> mapRobot $ try (rotate   1 ) b
 
 mapRobot :: (Robot -> Robot) -> StateT World IO ()
-mapRobot = (%=) (robot . _Just)
+mapRobot f = robot._Just %= f
 
 try :: (Vector -> Vector) -> Board -> Robot -> Robot
 try f b r = Robot { _pose=result }
@@ -54,8 +54,7 @@ try f b r = Robot { _pose=result }
         result = if isBounded new b then new else old
 
 isBounded :: Vector -> Board -> Bool
-isBounded v b = case v of
-  Vector (x, y, z) -> x < width(b) && y < height(b) && x >= 0 && y >= 0
+isBounded (Vector(x,y,z)) b = x < width(b) && y < height(b) && x >= 0 && y >= 0
 
 place :: Vector -> StateT World IO ()
 place v = robot ?= Robot { _pose=v }
@@ -75,6 +74,4 @@ move (Vector (x,y,z)) = case z of
   West  -> Vector (x-1, y,   West)
 
 rotate :: Int -> Vector -> Vector
-rotate d v = case v of
-  Vector (x, y, z) -> Vector (x, y, toEnum(((fromEnum z)+d) `mod` 4))
-
+rotate d (Vector(x,y,z)) = Vector (x, y, toEnum(((fromEnum z)+d) `mod` 4))
