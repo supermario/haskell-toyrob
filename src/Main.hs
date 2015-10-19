@@ -38,11 +38,11 @@ cmd :: Command -> StateT World IO ()
 cmd c = do
   b  <- use board
   case c of
-    Place (x,y,c) -> place (Vector(x,y,c)) -- Todo: needs bounds checking
-    Report        -> report
+    Place (x,y,c) -> place (Vector(x,y,c)) b
     Move          -> mapRobot $ try move b
     Left          -> mapRobot $ try (rotate (-1)) b
     Right         -> mapRobot $ try (rotate   1 ) b
+    Report        -> report
 
 mapRobot :: (Robot -> Robot) -> StateT World IO ()
 mapRobot f = robot._Just %= f
@@ -56,8 +56,10 @@ try f b r = Robot { _pose=result }
 isBounded :: Vector -> Board -> Bool
 isBounded (Vector(x,y,z)) b = x < width(b) && y < height(b) && x >= 0 && y >= 0
 
-place :: Vector -> StateT World IO ()
-place v = robot ?= Robot { _pose=v }
+place :: Vector -> Board -> StateT World IO ()
+place v b = case isBounded v b of
+  True  -> robot ?= Robot { _pose=v }
+  False -> return ()
 
 report :: StateT World IO ()
 report = do
