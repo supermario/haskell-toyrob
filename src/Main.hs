@@ -9,9 +9,9 @@ import Control.Monad.Trans.State.Lazy (StateT, execStateT)
 import Text.Read                      (readMaybe)
 
 data Cardinal = North | East | South | West                                       deriving (Show, Enum, Read)
-data Vector   = Vector (Integer, Integer, Cardinal)                               deriving Show
+data Pose     = Pose (Integer, Integer, Cardinal)                                 deriving Show
 data Board    = Board { width :: Integer, height:: Integer }                      deriving Show
-data Robot    = Robot { _pose :: Vector }                                         deriving Show
+data Robot    = Robot { _pose :: Pose }                                           deriving Show
 data World    = World { _robot :: Maybe Robot, _board :: Board }                  deriving Show
 data Command  = Place (Integer, Integer, Cardinal) | Move | Left | Right | Report deriving (Show, Read)
 
@@ -38,7 +38,7 @@ cmd :: Command -> StateT World IO ()
 cmd c = do
   b  <- use board
   case c of
-    Place (x,y,c) -> place (Vector(x,y,c)) b
+    Place (x,y,c) -> place (Pose(x,y,c)) b
     Move          -> mapRobot $ try move b
     Left          -> mapRobot $ try (rotate (-1)) b
     Right         -> mapRobot $ try (rotate   1 ) b
@@ -47,16 +47,16 @@ cmd c = do
 mapRobot :: (Robot -> Robot) -> StateT World IO ()
 mapRobot f = robot._Just %= f
 
-try :: (Vector -> Vector) -> Board -> Robot -> Robot
+try :: (Pose -> Pose) -> Board -> Robot -> Robot
 try f b r = Robot { _pose=result }
   where old    = _pose r
         new    = f old
         result = if isBounded new b then new else old
 
-isBounded :: Vector -> Board -> Bool
-isBounded (Vector(x,y,z)) b = x < width(b) && y < height(b) && x >= 0 && y >= 0
+isBounded :: Pose -> Board -> Bool
+isBounded (Pose(x,y,z)) b = x < width(b) && y < height(b) && x >= 0 && y >= 0
 
-place :: Vector -> Board -> StateT World IO ()
+place :: Pose -> Board -> StateT World IO ()
 place v b = case isBounded v b of
   True  -> robot ?= Robot { _pose=v }
   False -> return ()
@@ -68,12 +68,12 @@ report = do
   where s (Just r) = show $ _pose r
         s Nothing  = "Unplaced"
 
-move :: Vector -> Vector
-move (Vector (x,y,z)) = case z of
-  North -> Vector (x,   y+1, North)
-  East  -> Vector (x+1, y,   East)
-  South -> Vector (x,   y-1, South)
-  West  -> Vector (x-1, y,   West)
+move :: Pose -> Pose
+move (Pose (x,y,z)) = case z of
+  North -> Pose (x,   y+1, North)
+  East  -> Pose (x+1, y,   East)
+  South -> Pose (x,   y-1, South)
+  West  -> Pose (x-1, y,   West)
 
-rotate :: Int -> Vector -> Vector
-rotate d (Vector(x,y,z)) = Vector (x, y, toEnum(((fromEnum z)+d) `mod` 4))
+rotate :: Int -> Pose -> Pose
+rotate d (Pose(x,y,z)) = Pose (x, y, toEnum(((fromEnum z)+d) `mod` 4))
