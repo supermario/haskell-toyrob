@@ -38,7 +38,7 @@ cmd :: Command -> StateT World IO ()
 cmd c = do
   b  <- use board
   case c of
-    Place (x,y,c) -> place (Pose(x,y,c)) b
+    Place (x,y,d) -> place (Pose(x,y,d)) b
     Move          -> mapRobot $ try move b
     Left          -> mapRobot $ try (rotate (-1)) b
     Right         -> mapRobot $ try (rotate   1 ) b
@@ -54,7 +54,7 @@ try f b r = Robot { _pose=result }
         result = if isBounded new b then new else old
 
 isBounded :: Pose -> Board -> Bool
-isBounded (Pose(x,y,z)) b = x < width(b) && y < height(b) && x >= 0 && y >= 0
+isBounded (Pose(x,y,_)) b = x < width(b) && y < height(b) && x >= 0 && y >= 0
 
 place :: Pose -> Board -> StateT World IO ()
 place v b = case isBounded v b of
