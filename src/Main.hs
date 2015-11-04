@@ -36,7 +36,7 @@ run oldWorld = do
 
 cmd :: Command -> StateT World IO ()
 cmd c = do
-  b  <- use board
+  b <- use board
   case c of
     Place (x,y,d) -> place (Pose(x,y,d)) b
     Move          -> mapRobot $ try move b
